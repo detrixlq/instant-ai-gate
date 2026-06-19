@@ -1,0 +1,92 @@
+﻿@page
+@model EmbeddingLabModel
+@{
+    ViewData["Title"] = "Embedding Lab";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/embeddinglab.css" asp-append-version="true" />
+}
+
+<div id="console-alert" class="alert-toast">
+    <i id="alert-icon" class="bi bi-exclamation-circle"></i>
+    <span id="alert-message">Warning</span>
+    <button id="close-alert-btn" class="alert-toast__close">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
+
+<div class="lab-container">
+    <header class="lab-header">
+        <h1 class="lab-header__title">Embedding Laboratory</h1>
+        <p class="lab-header__subtitle">
+            Explore the "digital fingerprint" of your text. Visualize how language models transform raw text into high-dimensional vectors and analyze semantic proximity in real-time.
+        </p>
+    </header>
+
+    <div class="lab-toolbar">
+        <h2 class="lab-toolbar__title">Live Comparison Tool</h2>
+
+        <div class="custom-select-wrapper" id="model-select-wrapper">
+            <div class="custom-select-trigger" id="custom-select-trigger">
+                <span>-- Select Active Pipeline --</span>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div class="custom-options" id="custom-options">
+            </div>
+        </div>
+
+        <select id="model-select" style="display: none;">
+            <option value="">-- Select Active Pipeline --</option>
+        </select>
+    </div>
+
+    <div class="lab-grid">
+        <div class="lab-sidebar">
+            <textarea id="text1" class="lab-textarea" placeholder="Enter first text..."></textarea>
+            <textarea id="text2" class="lab-textarea" placeholder="Enter second text..."></textarea>
+
+            <button id="analyze-btn" class="lab-btn-primary">
+                Analyze & Compare
+            </button>
+
+            <div class="gauge-card">
+                <div class="gauge-card__title">Similarity Score</div>
+                <div id="gauge-container" class="gauge-bar">
+                    <div id="gauge-fill" class="gauge-bar__fill"></div>
+                    <div id="similarity-score" class="gauge-bar__text">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lab-main-panel">
+            <div class="chart-container">
+                <canvas id="vectorChart" class="lab-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer class="lab-footer-info">
+        <div class="lab-footer-info__section">
+            <h3 class="lab-footer-info__title">What to explore?</h3>
+            <ul class="lab-footer-info__list">
+                <li>• <b>Semantic Similarity:</b> Validate how closely related two different phrasings truly are.</li>
+                <li>• <b>Model Performance:</b> Compare how different pipelines interpret the same linguistic structures.</li>
+                <li>• <b>Anomaly Detection:</b> Identify texts that models interpret in unexpected or outlier ways.</li>
+            </ul>
+        </div>
+        <div class="lab-footer-info__section">
+            <h3 class="lab-footer-info__title">How the chart helps</h3>
+            <p class="lab-footer-info__text">
+                The chart acts as a <b>semantic X-ray</b>. Overlapping lines visualize which high-dimensional features align between texts. Divergent patterns highlight conceptual dissonance, offering deep insights into the reasoning behind the model's similarity score.
+            </p>
+        </div>
+    </footer>
+</div>
+
+<div id="embedding-config" data-api-url="@Model.APIUrl" style="display: none;"></div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.js"></script>
+    <script src="~/js/pages/embeddinglab.js" asp-append-version="true"></script>
+}

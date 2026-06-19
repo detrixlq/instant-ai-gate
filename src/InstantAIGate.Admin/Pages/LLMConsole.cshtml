@@ -1,0 +1,154 @@
+﻿@page
+@model LLMConsoleModel
+@{
+    ViewData["Title"] = "AI Orchestration Console";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/llmconsole.css" asp-append-version="true" />
+    <script src="~/lib/marked/marked.min.js"></script>
+}
+
+<div class="console-container" id="console-page-root" data-api-url="@Model.APIUrl" data-warning-message="@Model.WarningMessage">
+
+    <div id="console-alert" class="console-alert">
+        <i class="las la-exclamation-circle"></i>
+        <span id="alert-message">Warning</span>
+        <button onclick="hideConsoleAlert()" class="alert-close-btn">
+            <i class="las la-times"></i>
+        </button>
+    </div>
+
+    <aside class="console-sidebar custom-scrollbar">
+        <div class="sidebar-group">
+            <label class="group-label">Target Execution Core</label>
+            <select id="console-repo-select" class="console-select font-mono">
+                <option value="">-- Select Active Pipeline --</option>
+                @foreach (var activeId in Model.ActiveModels)
+                {
+                    <!option value="@activeId" @(activeId.Equals(Model.SelectedRepoId, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>
+                        @activeId
+                    </!option>
+                }
+            </select>
+        </div>
+
+        <div class="sidebar-main-content">
+            <div class="sidebar-group flex-col-input">
+                <label class="group-label flex-label">
+                    <i class="las la-user-cog"></i> System Prompt Instruction
+                </label>
+                <textarea id="param-system" class="console-textarea" placeholder="You are an authentic, adaptive AI collaborator...">You are a helpful assistant.</textarea>
+            </div>
+
+            <div class="sampling-section">
+                <div class="sampling-header">
+                    <h3 class="sampling-title">Sampling Parameters</h3>
+                    <button onclick="saveSamplingParams()" class="icon-btn" title="Save current parameters as default">
+                        <i class="las la-save"></i>
+                    </button>
+                </div>
+
+                <div class="range-field">
+                    <div class="range-labels">
+                        <span class="cursor-help" title="Controls output randomness. Higher values (e.g., 1.2) make the output more creative, lower values (e.g., 0.2) make it more logical and precise.">
+                            Temperature <i class="las la-question-circle visual-help-icon"></i>
+                        </span>
+                        <span id="val-temp" class="range-value font-mono">0.7</span>
+                    </div>
+                    <input type="range" id="param-temp" min="0.0" max="1.5" step="0.05" value="0.7" oninput="document.getElementById('val-temp').innerText = this.value" class="console-range">
+                </div>
+
+                <div class="range-field">
+                    <div class="range-labels">
+                        <span class="cursor-help" title="Nucleus sampling. The model considers only tokens with top_p cumulative probability. At 0.9, the lowest 10% of options are excluded.">
+                            Top-P (Nucleus) <i class="las la-question-circle visual-help-icon"></i>
+                        </span>
+                        <span id="val-topp" class="range-value font-mono">0.9</span>
+                    </div>
+                    <input type="range" id="param-topp" min="0.0" max="1.0" step="0.05" value="0.9" oninput="document.getElementById('val-topp').innerText = this.value" class="console-range">
+                </div>
+
+
+
+                <div class="range-field">
+                    <div class="range-labels">
+                        <span class="cursor-help" title="Presence penalty. Positive values increase the likelihood of the model switching to entirely new topics.">
+                            Presence Penalty <i class="las la-question-circle visual-help-icon"></i>
+                        </span>
+                        <span id="val-presence" class="range-value font-mono">0.5</span>
+                    </div>
+                    <input type="range" id="param-presence" min="-2.0" max="2.0" step="0.1" value="0.5" oninput="document.getElementById('val-presence').innerText = this.value" class="console-range">
+                </div>
+
+                <div class="range-field">
+                    <div class="range-labels">
+                        <span class="cursor-help" title="Frequency penalty. Decreases the likelihood of repeating the same words proportionally to their frequency in the generated text.">
+                            Frequency Penalty <i class="las la-question-circle visual-help-icon"></i>
+                        </span>
+                        <span id="val-frequency" class="range-value font-mono">0.5</span>
+                    </div>
+                    <input type="range" id="param-frequency" min="-2.0" max="2.0" step="0.1" value="0.5" oninput="document.getElementById('val-frequency').innerText = this.value" class="console-range">
+                </div>
+
+                <div class="inputs-grid">
+                    <div>
+                        <label class="input-grid-label cursor-help" title="The maximum number of tokens (words/sub-words) to generate in a single response cycle.">
+                            Max Tokens <i class="las la-question-circle visual-help-icon"></i>
+                        </label>
+                        <input type="number" id="param-tokens" min="1" max="8192" step="62" value="1024" class="console-number font-mono">
+                    </div>
+                    <div>
+                        <label class="input-grid-label cursor-help" title="Fixes the random number generator seed. Any fixed number (e.g., 42) forces the model to produce identical responses for the same prompts.">
+                            Seed (-1 = Rand) <i class="las la-question-circle visual-help-icon"></i>
+                        </label>
+                        <input type="number" id="param-seed" min="-1" value="-1" class="console-number font-mono">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="console-chat-panel">
+        <div class="chat-header">
+            <div class="status-block">
+                <div id="status-pulse" class="status-pulse status-off"></div>
+                <span class="current-model-text font-mono" id="current-model-label">
+                    @(string.IsNullOrEmpty(Model.SelectedRepoId) ? "No active pipeline target" : Model.SelectedRepoId)
+                </span>
+            </div>
+            <button onclick="clearChatLayout()" class="clear-btn">
+                <i class="las la-trash-alt"></i> Clear
+            </button>
+        </div>
+
+        <div id="chat-scroller" class="chat-messages-container">
+            <div id="welcome-message" class="welcome-box">
+                <i class="las la-info-circle"></i>
+                <div>
+                    <span class="weight-bold">Local orchestration console is ready.</span> Select a deployed model from the left panel, adjust sampling parameters, and start inference.
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <textarea id="user-prompt-input" rows="1" class="user-textarea" placeholder="Ask anything..." onkeydown="handlePromptKeydown(event)"></textarea>
+
+                <div class="action-buttons">
+                    <button id="stop-generation-btn" onclick="abortInferenceStreaming()" class="btn-stop display-none" title="Stop generating">
+                        <i class="las la-stop-circle"></i>
+                    </button>
+
+                    <button id="send-prompt-btn" onclick="executeInferenceStreaming()" class="btn-send">
+                        <i id="send-icon" class="las la-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/llmconsole.js" asp-append-version="true"></script>
+}

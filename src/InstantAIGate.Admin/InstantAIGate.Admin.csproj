@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- Disable producing a native apphost.exe to avoid file-lock issues during development -->
+		<UseAppHost>false</UseAppHost>
+		<AssemblyVersion>1.0.0</AssemblyVersion>
+		<FileVersion>1.0.0</FileVersion>
+		<UserSecretsId>9b40a094-b959-4566-8a02-29b99fe7d07c</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.8" />
+		<PackageReference Include="OpenAI" Version="2.11.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\InstantAIGate.Application\InstantAIGate.Application.csproj" />
+	</ItemGroup>
+
+</Project>
